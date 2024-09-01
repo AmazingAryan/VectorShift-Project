@@ -42,15 +42,22 @@ export const TextNode = ({ id, data }) => {
     const variableRegex = /\{\{\s*(\w+)\s*\}\}/g;
     const newHandles = [];
     let match;
+    let i = 0;
     while ((match = variableRegex.exec(text)) !== null) {
       newHandles.push({
         id: `${id}-${match[1]}`,
         type: 'target',
         position: 'left',
+        style: { top: `${(i++) * 100 / (newHandles.length + 1)}%` }
       });
     }
     setHandles(newHandles);
   }, [text, id]);
+
+  const getHandleStyle = (index, totalHandles) => {
+    const top = (100 * (index + 1)) / (totalHandles + 1); // Calculate percentage top
+    return { top: `${top}%` };
+  };
 
   return (
     <BaseNode
@@ -69,7 +76,10 @@ export const TextNode = ({ id, data }) => {
           style: { overflow: 'hidden' }
         },
       ]}
-      handles={handles}
+      handles={handles.map((handle, index) => ({
+        ...handle,
+        style: getHandleStyle(index, handles.length)
+      }))}
       ref={nodeRef}
     />
   );
