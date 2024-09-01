@@ -1,9 +1,8 @@
-// BaseNode.js
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { Handle } from 'reactflow';
 import cn from 'classnames';
 
-export const BaseNode = ({ id, data, label, description, inputFields = [], handles = [], className }) => {
+export const BaseNode = forwardRef(({ id, data, label, description, inputFields = [], handles = [], className }, ref) => {
   const [fields, setFields] = useState(
     inputFields.reduce((acc, field) => {
       acc[field.name] = data?.[field.name] || field.defaultValue;
@@ -13,10 +12,13 @@ export const BaseNode = ({ id, data, label, description, inputFields = [], handl
 
   const handleChange = (name, value) => {
     setFields({ ...fields, [name]: value });
+    if (inputFields.find(field => field.name === name)?.onChange) {
+      inputFields.find(field => field.name === name).onChange(value);
+    }
   };
 
   return (
-    <div className={cn("w-[400px] h-[250px] border border-gray-300 rounded-lg shadow-sm bg-[#1B0A42] bg-opacity-30 backdrop-blur-md text-white ")}>
+    <div ref={ref} className={cn("w-[400px] h-[250px] border border-gray-300 rounded-lg shadow-sm bg-[#1B0A42] bg-opacity-30 backdrop-blur-md text-white ")}>
       <div className="font-bold h-10 bg-[#430B8A] rounded-t-lg flex flex-row justify-center items-center mb-1">{label}</div>
       { description && (
          <div className="text-sm text-gray-100 flex flex-row justify-center items-center m-2">{description}</div>
@@ -38,13 +40,22 @@ export const BaseNode = ({ id, data, label, description, inputFields = [], handl
                   </option>
                 ))}
               </select>
+            ) : field.type === 'textarea' ? (
+              <textarea
+                value={fields[field.name]}
+                onChange={(e) => handleChange(field.name, e.target.value)}
+                className="w-full p-2 bg-[#430B8A] border-none rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                rows={1}
+                ref={field.ref} 
+                style={field.style} 
+              />
             ) : field.type==='button' ? (
               <button
-              type="button"
-              className="w-full p-2 border border-none rounded-md bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {field.label}
-            </button>
+                type="button"
+                className="w-full p-2 border border-none rounded-md bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {field.label}
+              </button>
             ) : (
               <input
                 type={field.type}
@@ -67,4 +78,4 @@ export const BaseNode = ({ id, data, label, description, inputFields = [], handl
       ))}
     </div>
   );
-};
+});

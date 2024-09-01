@@ -1,24 +1,43 @@
-// textNode.js
 import React, { useState, useEffect, useRef } from 'react';
-import { BaseNode } from './baseNode'; // Assuming you're using BaseNode as your base component
+import { BaseNode } from './baseNode';
 
 export const TextNode = ({ id, data }) => {
   const [text, setText] = useState(data.text || '');
   const [handles, setHandles] = useState([]);
   const nodeRef = useRef(null);
+  const textAreaRef = useRef(null);
 
-  // Update size of the text node dynamically
-  useEffect(() => {
-    if (nodeRef.current) {
-      const lines = text.split('\n');
-      const newHeight = Math.min(lines.length * 20 + 40, 300); // Adjust height, limiting max height
-      const newWidth = Math.min(Math.max(...lines.map(line => line.length)) * 10 + 40, 500); // Adjust width, limiting max width
-      nodeRef.current.style.height = `${newHeight}px`;
-      nodeRef.current.style.width = `${newWidth}px`;
+  const adjustTextAreaAndNodeHeight = () => {
+    if (textAreaRef.current && nodeRef.current) {
+      // Reset the textarea height to auto to measure its scrollHeight
+      textAreaRef.current.style.height = 'auto';
+  
+      const nodePadding = 20; 
+      const minNodeHeight = 200; 
+      const maxNodeHeight = 600; 
+      const maxTextAreaHeight = minNodeHeight;
+      
+      
+      // Calculate the new height for the textarea, not exceeding maxTextAreaHeight
+      const newTextAreaHeight = Math.min(textAreaRef.current.scrollHeight, maxTextAreaHeight);
+      textAreaRef.current.style.height = `${newTextAreaHeight}px`;
+  
+      // Calculate the required node height based on the textarea height
+      const newNodeHeight = Math.min(
+        Math.max(newTextAreaHeight + nodePadding + 120, minNodeHeight),
+        maxNodeHeight
+      );
+  
+      // Set the node height
+      nodeRef.current.style.height = `${newNodeHeight}px`;
     }
+  };
+  
+  useEffect(() => {
+    adjustTextAreaAndNodeHeight();
   }, [text]);
+  
 
-  // Update handles based on variables in text
   useEffect(() => {
     const variableRegex = /\{\{\s*(\w+)\s*\}\}/g;
     const newHandles = [];
@@ -45,7 +64,9 @@ export const TextNode = ({ id, data }) => {
           label: 'Text Input',
           type: 'textarea',
           value: text,
-          onChange: (e) => setText(e.target.value),
+          onChange: setText,
+          ref: textAreaRef,
+          style: { overflow: 'hidden' }
         },
       ]}
       handles={handles}
